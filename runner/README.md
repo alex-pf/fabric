@@ -18,10 +18,21 @@ sudo bash runner/bootstrap.sh   # создаст пользователя, docke
 sudo bash runner/bootstrap.sh
 ```
 
+## Поток задачи по доске G1
+
+```text
+Todo → (раннер: цикл этапов 2–4) → Need Review → (человек смотрит PR) → Approved → (раннер: squash-merge) → Done
+```
+
+- **Todo**: watchdog видит карточку → один прогон `hermes chat -q` (ветка, код, PR, self-review → карточка в Need Review).
+- **Need Review**: человек смотрит PR, решает. Колонка ждёт человека, раннер не трогает.
+- **Approved**: решение человека. Раннер (pfbot13) squash-merge'ит связанный PR и двигает карточку в Done.
+- Ворота g1: PR обязателен, approval в GitHub не требуется — его заменяет колонка Approved (ruleset `protect-main`, 0 approvals).
+
 ## Что раннер делает / не делает
 
-- Делает: берёт задачу из Todo, ветка, код, PR по шаблону, self-review, карточку в In Review.
-- Не делает: не мёржит PR (merge — только alex-pf), не меняет ruleset, не имеет root на хосте.
+- Делает: берёт задачу из Todo, ветка, код, PR, self-review; исполняет Approved (merge + Done).
+- Не делает: не переводит карточки в Approved (это только человек), не меняет ruleset, не имеет root на хосте, не действует от имени alex-pf.
 
 ## Логи
 
