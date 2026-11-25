@@ -47,19 +47,21 @@ fi
 
 echo "== 5/6 Первичная настройка Hermes (том данных)"
 mkdir -p "${FACTORY_HOME}/hermes-data"
-chown -R "${FACTORY_USER}:${FACTORY_USER}" "${FACTORY_HOME}/hermes-data"
-if [ ! -f "${FACTORY_HOME}/hermes-data/.env" ]; then
-  # Ключи Hermes лежат в томе /opt/data — копируем из хостового .env при первом старте.
-  sudo -u "${FACTORY_USER}" cp "${FACTORY_HOME}/.env" "${FACTORY_HOME}/hermes-data/.env"
+# Внутри образа Hermes работает под UID 10000 — том должен принадлежать ему,
+# иначе контейнер не прочитает .env/auth.json (PermissionError в логах).
+if [ -f "${FACTORY_HOME}/.env" ] && [ ! -f "${FACTORY_HOME}/hermes-data/.env" ]; then
+  cp "${FACTORY_HOME}/.env" "${FACTORY_HOME}/hermes-data/.env"
 fi
+chown -R 10000:10000 "${FACTORY_HOME}/hermes-data"
 
 echo "== 6/6 Контейнер + cron обновлений"
 sudo -u "${FACTORY_USER}" bash -c "
   cd ${FACTORY_HOME}/fabric/runner
   docker compose up -d
 "
+# pipefail-safe: grep -v на пустом crontab возвращает 1 — защищаемся через || true
 CRON_LINE="*/5 * * * * ${FACTORY_HOME}/fabric/runner/update.sh >> ${FACTORY_HOME}/update.log 2>&1"
-( crontab -u "${FACTORY_USER}" -l 2>/dev/null | grep -v 'runner/update.sh'; echo "${CRON_LINE}" ) | crontab -u "${FACTORY_USER}" -
+( crontab -u "${FACTORY_USER}" -l 2>/dev/null | grep -v 'runner/update.sh' || true; echo "${CRON_LINE}" ) | crontab -u "${FACTORY_USER}" -
 
 echo "Готово. Логи: docker logs fabric-runner; обновления: ${FACTORY_HOME}/update.log"
 echo "Следующий шаг — прогон-монтаж v1: задача в Todo на доске G1 уходит в реализацию сама."

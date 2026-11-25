@@ -39,6 +39,10 @@ Todo → (раннер: цикл этапов 2–4) → Need Review → (чел
 - Контейнер: `docker logs fabric-runner`
 - Обновления: `/home/factory/update.log`
 
+## Troubleshooting
+
+- **PermissionError: /opt/data/.env** — внутри образа Hermes работает под UID 10000, а файлы тома созданы от `factory`. Лечение: `chown -R 10000:10000 /home/factory/hermes-data && docker restart fabric-runner`. bootstrap делает это сам на свежих установках.
+
 ## Новый продукт / новый сервер
 
 1. `bootstrap.sh` на чистом VPS.

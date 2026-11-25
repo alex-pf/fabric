@@ -27,6 +27,21 @@ API = "https://api.github.com"
 GRAPHQL = API + "/graphql"
 TICK_LOCK = os.environ.get("TICK_LOCK", "/tmp/fabric-watchdog.lock")
 
+
+def load_env_fallback(path: str = "/opt/data/.env") -> None:
+    """Cron-скрипты получают санитизированное окружение — подтягиваем .env сами."""
+    try:
+        for line in open(path):
+            line = line.strip()
+            if line and not line.startswith("#") and "=" in line:
+                key, _, val = line.partition("=")
+                os.environ.setdefault(key.strip(), val.strip())
+    except OSError:
+        pass
+
+
+load_env_fallback()
+
 ITEMS_QUERY = """
 query($projectId: ID!) {
   node(id: $projectId) {
