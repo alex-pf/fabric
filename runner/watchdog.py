@@ -131,7 +131,14 @@ def api(method: str, path: str, payload: dict | None = None) -> dict:
 
 def fetch_items(project_id: str) -> list:
     data = graphql(ITEMS_QUERY, {"projectId": project_id})
-    nodes = (data.get("data", {}).get("node", {}) or {}).get("items", {}).get("nodes", [])
+    node = data.get("data", {}).get("node")
+    if node is None:
+        # Молчаливый выход здесь маскировал недоступность доски (бот не в коллабораторах проекта).
+        raise RuntimeError(
+            f"доска {project_id} недоступна для токена (node=null): "
+            "проверь, что бот добавлен в коллабораторы проекта"
+        )
+    nodes = node.get("items", {}).get("nodes", [])
     return [it for it in nodes if it.get("content")]
 
 
