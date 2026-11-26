@@ -1,0 +1,17 @@
+# Раннер фабрики: официальный образ Hermes, весь стейт — в томе на хосте.
+# Bootstrap: см. runner/bootstrap.sh. Обновления: runner/update.sh по cron.
+
+services:
+  runner:
+    image: nousresearch/hermes-agent:latest
+    container_name: fabric-runner
+    restart: unless-stopped
+    # Стейт Hermes (config, .env, skills, memory, cron) живёт на хосте и переживает пересоздание контейнера.
+    volumes:
+      - /home/factory/hermes-data:/opt/data
+      - /home/factory/fabric:/opt/fabric:ro
+    env_file:
+      - /home/factory/.env
+    # Порт 8642 не открываем наружу: раннер никому ничего не экспонирует (поллинг исходящий).
+    entrypoint: ["/opt/fabric/runner/entrypoint.sh"]
+    command: ["gateway", "run"]
